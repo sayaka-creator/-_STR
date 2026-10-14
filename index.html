@@ -207,6 +207,12 @@
 
         .type-badge { font-size: 0.75rem; color: var(--primary-color); font-weight: 600; margin-bottom: 2px; }
 
+        /* 明細が空のときのプレースホルダ */
+        .items-table tr.empty-row td.empty-cell { padding: 26px 16px; text-align: center; }
+        .empty-inner { display: flex; flex-direction: column; gap: 6px; }
+        .empty-inner strong { font-size: 0.95rem; color: var(--text-main); }
+        .empty-inner span { font-size: 0.85rem; color: var(--text-muted); }
+
         /* 数量ステッパー */
         .qty-wrap { display: flex; align-items: center; gap: 5px; }
         .step-btn {
@@ -400,6 +406,47 @@
         }
         .ref-card li span:last-child { font-weight: 600; white-space: nowrap; }
 
+        /* 使い方ガイド */
+        .guide-list { list-style: none; padding-left: 0; counter-reset: guide; }
+        .guide-list li {
+            counter-increment: guide;
+            position: relative;
+            padding: 0 0 16px 38px;
+            margin-bottom: 14px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+        .guide-list li:last-of-type { border-bottom: none; }
+        .guide-list li::before {
+            content: counter(guide);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: #eff6ff;
+            color: var(--primary-dark);
+            border: 1px solid #bfdbfe;
+            font-size: 0.8rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .guide-list li b { display: block; font-size: 0.95rem; margin-bottom: 4px; }
+        .guide-list li p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.7; }
+        .guide-list li p b { display: inline; font-size: inherit; color: var(--text-main); }
+        .guide-note {
+            margin-top: 6px;
+            padding: 12px 14px;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: #78350f;
+            line-height: 1.7;
+        }
+
         /* トースト */
         .toast {
             position: fixed;
@@ -428,7 +475,7 @@
            スマホ（〜700px）
            ============================================================ */
         @media (max-width: 700px) {
-            body { padding: 12px 12px calc(108px + env(safe-area-inset-bottom)); }
+            body { padding: 12px 12px calc(132px + env(safe-area-inset-bottom)); }
 
             .app-header { flex-direction: column; align-items: stretch; gap: 12px; padding: 14px; }
             .app-title { font-size: 1.05rem; justify-content: space-between; }
@@ -467,6 +514,16 @@
             }
 
             .items-table td { border: none; padding: 0 0 10px; }
+
+            /* 空状態は破線カードに */
+            .items-table tr.empty-row {
+                border-style: dashed;
+                border-left: 4px solid var(--border-color);
+                background: #f8fafc;
+                box-shadow: none;
+                padding: 4px 12px;
+            }
+            .items-table tr.empty-row td.empty-cell { padding: 22px 6px; }
 
             .items-table td[data-label]::before {
                 content: attr(data-label);
@@ -570,7 +627,7 @@
             .ref-card li { padding: 8px 0; font-size: 0.95rem; }
 
             .record-actions .btn { flex: 1 1 100%; }
-            .toast { bottom: calc(108px + env(safe-area-inset-bottom)); }
+            .toast { bottom: calc(120px + env(safe-area-inset-bottom)); }
         }
 
         /* ============================================================
@@ -627,7 +684,7 @@
             <span class="save-state" id="saveState" role="status" aria-live="polite">保存済み</span>
         </div>
         <div class="header-buttons">
-            <button class="btn btn-secondary" onclick="loadPresetSample()">⚡ サンプル読込</button>
+            <button class="btn btn-secondary" onclick="openGuideModal()">❓ 使い方</button>
             <button class="btn btn-secondary" onclick="openRefModal()">📋 売価表</button>
             <button class="btn" onclick="copyRecord()">💾 コピー保存</button>
             <button class="btn btn-secondary" onclick="openRecordsModal()">
@@ -750,6 +807,61 @@
         </div>
         <div class="modal-body">
             <div id="recordsList"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 使い方ガイド -->
+<div class="modal" id="guideModal" role="dialog" aria-modal="true" aria-label="使い方">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>❓ 使い方</h3>
+            <button class="btn btn-secondary" onclick="closeGuideModal()" style="padding: 6px 12px; font-size: 0.85rem; min-height: 40px;">✕ 閉じる</button>
+        </div>
+        <div class="modal-body">
+            <ol class="guide-list">
+                <li>
+                    <b>お名前と担当を入力</b>
+                    <p>「お名前」はお客様のお名前、「担当」は自分の名前を入れておくと、保存した記録を探しやすくなります。</p>
+                </li>
+                <li>
+                    <b>明細を追加する</b>
+                    <p>「タップして明細を追加」のカテゴリ（プレ貨・金券・切手など）をタップすると、明細が1行追加されます。品目名（例：100円銀貨 鳳凰）を入力してください。</p>
+                </li>
+                <li>
+                    <b>数量を入れる</b>
+                    <p>「−」「＋」ボタンで増減できます。グラムで数える品目は、そのままグラム数を入力してください。数字の欄をタップして直接入力もできます。</p>
+                </li>
+                <li>
+                    <b>売価 (B) を入れる</b>
+                    <p>メルカリ・ヤフオクなどで売れる見込みの金額です。「¥7,000」「7000」どちらでも構いません。<b>数字を入れた行だけが売価合計に加算されます。</b>相場メモなど文字だけを書いた行は集計されません。</p>
+                </li>
+                <li>
+                    <b>買取額 (A) を入れる</b>
+                    <p>お客様にお支払いする金額です。入力すると自動でカンマ区切り（例：6,000）になります。</p>
+                </li>
+                <li>
+                    <b>税率は自動です</b>
+                    <p><b>金券だけが非課税（0%）</b>、それ以外のカテゴリはすべて10%で計算されます。操作は不要です。</p>
+                </li>
+                <li>
+                    <b>集計の見方</b>
+                    <p>画面下（スマホは固定バー）に<b>売価合計 (B)・買取金額合計 (A)・粗利</b>が出ます。<b>粗利 = 売価合計 − 買取金額合計</b>です。粗利がマイナスのときは赤く表示されます。</p>
+                </li>
+                <li>
+                    <b>一時保存して、あとで続きを編集する</b>
+                    <p>「💾 コピー保存」を押すと、その時点の内容が記録として残ります。「📁 保存した記録」から <b>呼び出して編集</b>（続きの入力や修正）／<b>複製</b>（同じお客様の別取引）／<b>削除</b> ができます。</p>
+                </li>
+                <li>
+                    <b>クリアの動き</b>
+                    <p>「🗑️ クリア」は入力中の内容だけを消します。<b>保存した記録は消えません。</b>次のお客様に切り替えるときに使ってください。</p>
+                </li>
+                <li>
+                    <b>印刷する</b>
+                    <p>「🖨️ 印刷 / PDF」で計算書として印刷できます。印刷時はボタン類が消え、明細は表形式で出力されます。</p>
+                </li>
+            </ol>
+            <p class="guide-note">入力内容と保存した記録は、この端末のブラウザ内に保存されます。別の端末・ブラウザとは共有されません。ブラウザの履歴やサイトデータを消去すると、記録も消えるのでご注意ください。</p>
         </div>
     </div>
 </div>
@@ -882,14 +994,6 @@
             }
         }
 
-        if (items.length === 0) {
-            items = [
-                { category: "プレ貨", name: "100円銀貨 鳳凰 まとめ", qty: 20, price: "¥7,000", subtotal: 6000 },
-                { category: "金券", name: "テレカ50", qty: 6, price: "¥2,100", subtotal: 3000 },
-                { category: "ブランド時計", name: "セイコー時計 キングファースト", qty: 1, price: "¥4,000", subtotal: 500 }
-            ].map(normalizeItem);
-        }
-
         renderQuickAdd();
         renderTable();
         updateSummary();
@@ -1014,23 +1118,22 @@
         saveDraft();
     }
 
-    function loadPresetSample() {
-        items = [
-            { category: "プレ貨", name: "100円銀貨 鳳凰 まとめ", qty: 20, price: "¥7,000", subtotal: 6000 },
-            { category: "金券", name: "テレカ50", qty: 6, price: "¥2,100", subtotal: 3000 },
-            { category: "ブランド時計", name: "セイコー時計 キングファースト", qty: 1, price: "¥4,000", subtotal: 500 }
-        ].map(normalizeItem);
-        document.getElementById('clientName').value = "門内 政昭 様";
-        document.getElementById('staffName').value = "小林";
-        renderTable();
-        updateSummary();
-        saveDraft();
-        showToast('サンプルを読み込みました');
-    }
-
     function renderTable() {
         const tbody = document.getElementById('itemsTableBody');
         tbody.innerHTML = '';
+
+        if (items.length === 0) {
+            const tr = document.createElement('tr');
+            tr.className = 'empty-row';
+            tr.innerHTML = `<td colspan="7" class="empty-cell">
+                <div class="empty-inner">
+                    <strong>まだ明細がありません</strong>
+                    <span>上のカテゴリ（プレ貨・金券 など）をタップすると明細が追加されます。</span>
+                </div>
+            </td>`;
+            tbody.appendChild(tr);
+            return;
+        }
 
         const categoryCurrentIndex = {};
 
@@ -1242,6 +1345,12 @@
         document.body.style.overflow = 'hidden';
     }
     function closeRecordsModal() { closeModal('recordsModal'); }
+
+    function openGuideModal() {
+        document.getElementById('guideModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeGuideModal() { closeModal('guideModal'); }
 
     function openRefModal() {
         document.getElementById('refModal').classList.add('active');
